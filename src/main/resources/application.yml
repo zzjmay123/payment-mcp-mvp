@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-mcp-mvp
+  
+  jackson:
+    default-property-inclusion: non_null
+
+logging:
+  level:
+    com.payment.mcp: DEBUG
+    org.springframework.web: INFO
+
+# MCP 配置
+mcp:
+  server:
+    name: payment-mcp-mvp
+    version: 1.0.0
+    # Mock 模式（生产环境改为 false）
+    mock: true
