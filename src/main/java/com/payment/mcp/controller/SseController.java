@@ -78,7 +78,7 @@ public class SseController {
     }
 
     /**
-     * 接收 MCP 消息
+     * 接收 MCP 消息（SSE 模式）
      * POST /mcp
      */
     @PostMapping(value = "/mcp", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -126,6 +126,43 @@ public class SseController {
                 // ignore
             }
             return ResponseEntity.status(500).body("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    /**
+     * 接收 MCP 消息（HTTP 短连接模式 - 推荐）
+     * POST /api/mcp
+     * 直接返回响应，不需要 SSE 会话
+     */
+    @PostMapping(value = "/api/mcp", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> handleHttpMessage(
+            @RequestBody String jsonBody
+    ) {
+        log.debug("Received HTTP message: {}", jsonBody);
+
+        try {
+            // 解析 JSON-RPC 请求
+            JsonRpcRequest request = jsonRpcHandler.parseRequest(jsonBody);
+            
+            // 处理请求
+            JsonRpcResponse response = jsonRpcHandler.handleRequest(request);
+            
+            log.debug("Sent HTTP response: {}", response);
+            return ResponseEntity.ok(jsonRpcHandler.toJson(response));
+            
+        } catch (Exception e) {
+            log.error("Error handling HTTP message", e);
+            try {
+                JsonRpcResponse errorResponse = JsonRpcResponse.error(
+                    null,
+                    -32603,
+                    "Internal error",
+                    e.getMessage()
+                );
+                return ResponseEntity.status(500).body(jsonRpcHandler.toJson(errorResponse));
+            } catch (Exception ex) {
+                return ResponseEntity.status(500).body("{\"error\":\"" + ex.getMessage() + "\"}");
+            }
         }
     }
 
